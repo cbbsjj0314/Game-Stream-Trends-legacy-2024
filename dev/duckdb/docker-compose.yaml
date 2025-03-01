@@ -1,0 +1,12 @@
+services:
+  duckdb:
+    build: .
+    container_name: duckdb_container
+    stdin_open: true
+    tty: true
+    ports:
+      - "8815:8815"
+    volumes:
+      - "D:/storage/game-stream-trends/duckdb/data:/data"
+    environment:
+      - DUCKDB_DATABASE=/data/database.db
