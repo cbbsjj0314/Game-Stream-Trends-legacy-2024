@@ -1,0 +1,14 @@
+services:
+  duckdb:
+    build: .
+    container_name: duckdb_container
+    stdin_open: true
+    tty: true
+    ports:
+      - ${DUCKDB_PORT}:${CONTAINER_PORT}
+    volumes:
+      - ${DUCKDB_DATA_PATH}:/data
+    environment:
+      - DUCKDB_DATABASE=/data/database.db
+    env_file:
+      - .env
