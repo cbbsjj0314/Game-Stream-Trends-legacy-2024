@@ -39,7 +39,7 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "User") + ";" +
 ```
 
 ## 3️⃣ 가상 환경 생성 및 의존성 설치
-▶ Mac
+▶ Mac (Windows WSL)
 ```sh
 # 1. 프로젝트 폴더로 이동
 cd /path/to/your/project
