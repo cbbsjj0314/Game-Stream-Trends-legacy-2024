@@ -7,9 +7,9 @@ name = "Game-Stream-Trends"
 version = "0.1.0"
 description = "Combine game data and streaming platform data to track the latest trends in gaming and streaming."
 packages = [
-    { include = "scripts", from = "dev/minio" },
-    { include = "external", from = "dev/airflow" },
-    { include = "dags", from = "dev/airflow"},
+    { include = "scripts", from = "infra/minio" },
+    { include = "scripts", from = "infra/airflow" },
+    { include = "src" },
 ]
 
 [tool.poetry.dependencies]
