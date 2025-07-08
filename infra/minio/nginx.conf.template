@@ -1,4 +1,4 @@
--- infra/minio/nginx.conf.template
+# infra/minio/nginx.conf.template
 
 user  nginx;
 worker_processes  auto;
