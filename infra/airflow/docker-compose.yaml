@@ -6,7 +6,7 @@ x-airflow-common:
   image: apache/airflow:2.10.4
   build:
     context: ../..
-    dockerfile: dev/airflow/Dockerfile
+    dockerfile: infra/airflow/Dockerfile
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
@@ -15,15 +15,15 @@ x-airflow-common:
     AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
     AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
     AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+    AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/src/dags
     AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "True"
     AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: "300"
 
   volumes:
-    - ./dags:/opt/airflow/dags
-    - ./external:/opt/airflow/external
-    - ./logs:/opt/airflow/logs
-    - ./plugins:/opt/airflow/plugins
-    - ./config:/opt/airflow/config
+    - ../../src:/opt/airflow/src
+    - ../../logs/airflow:/opt/airflow/logs
+    - ./scripts:/opt/airflow/scripts
+    - ./.env:/opt/airflow/.env
   depends_on:
     &airflow-common-depends-on
     redis:
@@ -156,6 +156,7 @@ services:
         exec /entrypoint bash -c "
           airflow db upgrade && \
           airflow users create -r Admin -u ${AIRFLOW_ADMIN_USER} -e ${AIRFLOW_ADMIN_EMAIL} -f admin -l admin -p ${AIRFLOW_ADMIN_PASSWORD} && \
+          python /opt/airflow/scripts/init_airflow_vars.py && \
           airflow connections import /home/airflow/config/connections.yaml || true
           airflow version"
     # yamllint enable rule:line-length
