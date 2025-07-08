@@ -23,3 +23,5 @@ WORKDIR /opt/airflow
 RUN pip install --no-cache-dir poetry && \
     poetry config virtualenvs.create false && \
     poetry install --no-root --with dev
+
+ENV PYTHONPATH="/opt/airflow/src"
