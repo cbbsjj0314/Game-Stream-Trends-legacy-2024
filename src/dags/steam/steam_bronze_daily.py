@@ -1,17 +1,13 @@
 # src/dags/steam/steam_bronze_daily.py
 
-import sys
-
-sys.path.insert(0, "/opt/airflow/external/steam/bronze")
-
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 
-from fetch_details import main as fetch_details_main
-from fetch_news import main as fetch_news_main
-from fetch_discounts import main as fetch_discounts_main
-from fetch_review_metas import main as fetch_review_metas_main
+from steam.ingest.fetch_details import main as fetch_details_main
+from steam.ingest.fetch_news import main as fetch_news_main
+from steam.ingest.fetch_discounts import main as fetch_discounts_main
+from steam.ingest.fetch_review_metas import main as fetch_review_metas_main
 
 task_info = [
     ('fetch_details', fetch_details_main),

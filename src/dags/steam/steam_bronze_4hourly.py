@@ -1,14 +1,9 @@
 # src/dags/steam/steam_bronze_4hourly.py
 
-import sys
-
-sys.path.insert(0, "/opt/airflow/external/steam/bronze")
-
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-
-from fetch_players import main as fetch_players_main
+from steam.ingest.fetch_players import main as fetch_players_main
 
 task_info = [('fetch_players', fetch_players_main)]
 

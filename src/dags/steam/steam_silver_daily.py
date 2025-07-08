@@ -1,19 +1,14 @@
 # src/dags/steam/steam_silver_daily.py
 
-import sys
-
-sys.path.insert(0, "/opt/airflow/external/steam/silver")
-
 from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.operators.python import PythonOperator
 from airflow.sensors.external_task_sensor import ExternalTaskSensor
 
-from transform_details_to_images import (
-    process_data as transform_details_to_images_process_data,
-)
-from transform_discounts import process_data as transform_discounts_process_data
-from transform_review_metas import process_data as transform_review_metas_process_data
+from steam.transform.transform_details_to_images import process_data as transform_details_to_images_process_data
+from steam.transform.transform_discounts import process_data as transform_discounts_process_data
+from steam.transform.transform_review_metas import process_data as transform_review_metas_process_data
+
 
 task_info = [
     ('transform_details_to_images', transform_details_to_images_process_data),

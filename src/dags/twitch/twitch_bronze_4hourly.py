@@ -1,15 +1,11 @@
 # src/dags/twitch/twitch_bronze_4hourly.py
 
-import sys
-
-sys.path.insert(0, "/opt/airflow/external/twitch/bronze")
-
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 
-from fetch_streams import main as fetch_streams_main
-from fetch_top_categories import main as fetch_top_categories_main
+from twitch.ingest.fetch_streams import main as fetch_streams_main
+from twitch.ingest.fetch_top_categories import main as fetch_top_categories_main
 
 task_info = [
     ('fetch_streams', fetch_streams_main),

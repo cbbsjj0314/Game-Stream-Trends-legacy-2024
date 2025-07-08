@@ -1,18 +1,12 @@
 # src/dags/twitch/twitch_silver_4hourly.py
 
-import sys
-
-sys.path.insert(0, "/opt/airflow/external/twitch/silver")
-
 from airflow import DAG
 from datetime import datetime, timedelta
 from airflow.operators.python import PythonOperator
 from airflow.sensors.external_task_sensor import ExternalTaskSensor
 
-from transform_streams import process_data as transform_streams_process_data
-from transform_top_categories import (
-    process_data as transform_top_categories_process_data,
-)
+from twitch.transform.transform_streams import process_data as transform_streams_process_data
+from twitch.transform.transform_top_categories import process_data as transform_top_categories_process_data
 
 task_info = [
     ('transform_streams', transform_streams_process_data),
