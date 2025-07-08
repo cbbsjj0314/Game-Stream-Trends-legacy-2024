@@ -19,7 +19,7 @@ BASE_OUTPUT_PATH = "data/processed/silver/steam"
 MINIO_ENDPOINT = Variable.get("MINIO_ENDPOINT")
 MINIO_ACCESS_KEY = Variable.get("MINIO_ACCESS_KEY")
 MINIO_SECRET_KEY = Variable.get("MINIO_SECRET_KEY")
-MINIO_BUCKET_NAME = Variable.get("GST_BUCKET_NAME")
+MINIO_BUCKET_NAME = Variable.get("MINIO_BUCKET_NAME")
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"

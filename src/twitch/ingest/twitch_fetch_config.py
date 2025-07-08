@@ -27,7 +27,7 @@ class Config:
     MINIO_ENDPOINT = Variable.get("MINIO_ENDPOINT")
     MINIO_ACCESS_KEY = Variable.get("MINIO_ACCESS_KEY")
     MINIO_SECRET_KEY = Variable.get("MINIO_SECRET_KEY")
-    MINIO_BUCKET_NAME = Variable.get("GST_BUCKET_NAME")
+    MINIO_BUCKET_NAME = Variable.get("MINIO_BUCKET_NAME")
 
     @staticmethod
     def get_minio_client():
