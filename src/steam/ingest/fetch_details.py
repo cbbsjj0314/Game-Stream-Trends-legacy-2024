@@ -3,14 +3,13 @@
 import time
 import logging
 import requests
+
 from datetime import datetime, timezone
-from utils.logging_utils import setup_logger
-from steam_fetch_config import Config
+from steam.ingest.steam_fetch_config import Config
 
 DATA_TYPE = "details"
 Config.setup_minio_logging(bucket_name=Config.MINIO_BUCKET_NAME, data_type=DATA_TYPE)
 
-logger = setup_logger(__name__)
 
 def fetch_app_details(appid):
     url = f"https://store.steampowered.com/api/appdetails?appids={appid}"

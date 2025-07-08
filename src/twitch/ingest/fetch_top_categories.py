@@ -3,7 +3,7 @@
 import requests
 import logging
 from datetime import datetime, timezone
-from twitch_fetch_config import Config
+from twitch.ingest.twitch_fetch_config import Config
 
 CLIENT_ID = Config.TWC_CLIENT_ID
 ACCESS_TOKEN = Config.TWC_ACCESS_TOKEN

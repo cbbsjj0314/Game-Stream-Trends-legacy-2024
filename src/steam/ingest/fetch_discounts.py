@@ -6,8 +6,9 @@
 
 import logging
 import requests
+
 from datetime import datetime, timezone
-from steam_fetch_config import Config
+from steam.ingest.steam_fetch_config import Config
 
 DATA_TYPE = "discounts"
 Config.setup_minio_logging(bucket_name=Config.MINIO_BUCKET_NAME, data_type=DATA_TYPE)

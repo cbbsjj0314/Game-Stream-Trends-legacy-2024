@@ -3,8 +3,9 @@
 import logging
 import asyncio
 import aiohttp
-from steam_fetch_config import Config
+
 from datetime import datetime, timezone
+from steam.ingest.steam_fetch_config import Config
 
 DATA_TYPE = "review_metas"
 Config.setup_minio_logging(bucket_name=Config.MINIO_BUCKET_NAME, data_type=DATA_TYPE)
