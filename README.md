@@ -61,12 +61,12 @@ echo $VIRTUAL_ENV
 ## 4️⃣ Airflow 및 MinIO 실행
 #### ▶ Airflow 실행
 ```sh
-cd dev/airflow
+cd infra/airflow
 docker compose up --build -d
 ```
 
 #### ▶ MinIO 실행
 ```sh
-cd dev/minio
+cd infra/minio
 docker compose up --bulid -d
 ```
