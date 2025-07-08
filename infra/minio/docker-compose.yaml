@@ -1,0 +1,74 @@
+# infra/minio/docker-compose.yaml
+
+x-minio-common: &minio-common
+  image: quay.io/minio/minio:RELEASE.2025-01-20T14-49-07Z
+  command: server --console-address ":${CONTAINER_CONSOLE_PORT}" ${MINIO_NODES}
+  expose:
+    - "${CONTAINER_API_PORT}"
+    - "${CONTAINER_CONSOLE_PORT}"
+  environment:
+    MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+    MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+  healthcheck:
+    test: ["CMD", "mc", "ready", "local"]
+    interval: 5s
+    timeout: 5s
+    retries: 5
+  env_file:
+    - .env
+
+services:
+  minio1:
+    <<: *minio-common
+    hostname: minio1
+    volumes:
+      - ${MINIO1_DATA1_PATH}:/data1
+      - ${MINIO1_DATA2_PATH}:/data2
+
+  minio2:
+    <<: *minio-common
+    hostname: minio2
+    volumes:
+      - ${MINIO2_DATA1_PATH}:/data1
+      - ${MINIO2_DATA2_PATH}:/data2
+
+  minio3:
+    <<: *minio-common
+    hostname: minio3
+    volumes:
+      - ${MINIO3_DATA1_PATH}:/data1
+      - ${MINIO3_DATA2_PATH}:/data2
+
+  minio4:
+    <<: *minio-common
+    hostname: minio4
+    volumes:
+      - ${MINIO4_DATA1_PATH}:/data1
+      - ${MINIO4_DATA2_PATH}:/data2
+
+  nginx:
+    image: nginx:1.19.2-alpine
+    hostname: nginx
+    volumes:
+      - ./nginx.conf.template:/etc/nginx/nginx.conf.template:ro
+    command: /bin/sh -c "envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
+    ports:
+      - "${MINIO_API_PORT}:${CONTAINER_API_PORT}"
+      - "${MINIO_CONSOLE_PORT}:${CONTAINER_CONSOLE_PORT}"
+    depends_on:
+      - minio1
+      - minio2
+      - minio3
+      - minio4
+    env_file:
+      - .env
+
+volumes:
+  data1-1:
+  data1-2:
+  data2-1:
+  data2-2:
+  data3-1:
+  data3-2:
+  data4-1:
+  data4-2:
