@@ -18,10 +18,10 @@ def fetch_app_details(appid):
         response.raise_for_status()
         data = response.json()
 
-        logger.info(f"Details for appid {appid} fetched successfully.")
+        logging.info(f"Details for appid {appid} fetched successfully.")
         return appid, data
     except Exception as e:
-        logger.error(f"Failed to fetch details for appid {appid}: {e}")
+        logging.error(f"Failed to fetch details for appid {appid}: {e}")
         return appid, None
 
 
@@ -40,7 +40,7 @@ def main():
     try:
         appids = Config.download_from_minio('data/raw/steam/app-list/appids.json')
         if not appids:
-            logger.error("No appids available to fetch details.")
+            logging.error("No appids available to fetch details.")
             return
 
         combined_details = collect_all_details(appids)
@@ -50,11 +50,11 @@ def main():
             timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d_%H-%M-%S')
             filename = f'data/raw/steam/{DATA_TYPE}/{date_str}/combined_{DATA_TYPE}_{timestamp}.json'
             Config.upload_to_minio(combined_details, filename)
-            logger.info("Combined details data uploaded successfully.")
+            logging.info("Combined details data uploaded successfully.")
         else:
-            logger.error("No details data collected to upload.")
+            logging.error("No details data collected to upload.")
     except Exception as e:
-        logger.error(f"An error occurred: {e}")
+        logging.error(f"An error occurred: {e}")
 
 
 if __name__ == "__main__":
