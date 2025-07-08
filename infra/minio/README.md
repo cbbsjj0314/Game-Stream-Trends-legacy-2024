@@ -72,8 +72,8 @@ docker ps
 
 ### 2. 테스트 스크립트 실행
 - **호스트 머신**
-    - `dev/minio/scripts/`의 `host_minio_test.py` 실행
+    - `infra/minio/scripts/`의 `host_minio_test.py` 실행
     - MinIO에 `host-test-bucket` 버킷 및 테스트 파일 생성돼 있으면 성공
 - **클라이언트 머신**
-    - `dev/minio/scripts/`의 `client_minio_test.py` 실행
+    - `infra/minio/scripts/`의 `client_minio_test.py` 실행
     - MinIO에 `client-test-bucket` 버킷 및 테스트 파일 생성돼 있으면 성공
