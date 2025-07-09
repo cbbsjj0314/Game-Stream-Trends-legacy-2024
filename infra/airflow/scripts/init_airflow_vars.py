@@ -5,7 +5,7 @@ from airflow.models import Variable, Connection
 from airflow import settings
 from dotenv import load_dotenv
 
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+dotenv_path = os.path.join(os.path.dirname(__file__), "..", ".env")
 load_dotenv(dotenv_path=dotenv_path)
 
 # --------- Variables 등록 ---------
@@ -15,7 +15,7 @@ variable_keys = [
     "MINIO_ENDPOINT",
     "MINIO_BUCKET_NAME",
     "TWC_ACCESS_TOKEN",
-    "TWC_CLIENT_ID"
+    "TWC_CLIENT_ID",
 ]
 for key in variable_keys:
     Variable.set(key, os.environ[key])
@@ -31,7 +31,7 @@ minio_connection = Connection(
     host=os.environ["MINIO_ENDPOINT"].replace("http://", "").replace("https://", ""),
     login=os.environ["MINIO_ACCESS_KEY"],
     password=os.environ["MINIO_SECRET_KEY"],
-    extra=f'{{"bucket_name": "{os.environ["MINIO_BUCKET_NAME"]}", "secure": false}}'
+    extra=f'{{"bucket_name": "{os.environ["MINIO_BUCKET_NAME"]}", "secure": false}}',
 )
 if not session.query(Connection).filter(Connection.conn_id == minio_conn_id).first():
     session.add(minio_connection)

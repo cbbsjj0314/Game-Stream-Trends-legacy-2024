@@ -18,6 +18,7 @@ BASE_OUTPUT_PATH = "data/processed/silver/twitch"
 
 logger = logging.getLogger("silver-layer-dask-job")
 
+
 def minio_path_exists(minio_client, bucket, prefix):
     try:
         response = minio_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
@@ -28,10 +29,12 @@ def minio_path_exists(minio_client, bucket, prefix):
         logger.error(f"Error checking MinIO path: {str(e)}")
         return False
 
+
 def extract_timestamp_from_filename(filename):
     TIMESTAMP_PATTERN = r".*_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\.json"
     match = re.search(TIMESTAMP_PATTERN, filename)
     return match.group(1) if match else None
+
 
 def process_data():
     setup_minio_logging(
@@ -79,9 +82,7 @@ def process_data():
             timestamps = []
             for file_key in all_files:
                 logger.info(f"Downloading file: {file_key}")
-                response = minio_client.get_object(
-                    Bucket=Config.MINIO_BUCKET_NAME, Key=file_key
-                )
+                response = minio_client.get_object(Bucket=Config.MINIO_BUCKET_NAME, Key=file_key)
                 content = response["Body"].read().decode("utf-8")
                 json_data = json.loads(content)
                 json_list.append(json_data)
@@ -128,13 +129,9 @@ def process_data():
             )
 
             collected_at_value = (
-                max(timestamps)
-                if timestamps
-                else f"{formatted_date}_{formatted_hour}-00-00"
+                max(timestamps) if timestamps else f"{formatted_date}_{formatted_hour}-00-00"
             )
-            df["collected_at"] = pd.to_datetime(
-                collected_at_value, format="%Y-%m-%d_%H-%M-%S"
-            )
+            df["collected_at"] = pd.to_datetime(collected_at_value, format="%Y-%m-%d_%H-%M-%S")
 
             transformed_df = dd.from_pandas(df, npartitions=1)
 
@@ -154,13 +151,12 @@ def process_data():
 
             logger.info(f"Processed data saved to MinIO: {minio_parquet_path}")
         except Exception as e:
-            logger.error(
-                f"Error processing data for {formatted_date} {formatted_hour}: {str(e)}"
-            )
+            logger.error(f"Error processing data for {formatted_date} {formatted_hour}: {str(e)}")
 
         start_time += timedelta(hours=1)
 
     logger.info("Dask Job completed successfully.")
+
 
 if __name__ == "__main__":
     process_data()

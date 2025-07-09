@@ -34,7 +34,7 @@ def download_from_minio(key):
         logging.info(f"Downloading from MinIO bucket={conf['bucket_name']}, key={key}")
         client = get_minio_client()
         response = client.get_object(Bucket=conf["bucket_name"], Key=key)
-        raw_data = response['Body'].read()
+        raw_data = response["Body"].read()
         data = json.loads(raw_data)
 
         if not isinstance(data, list):

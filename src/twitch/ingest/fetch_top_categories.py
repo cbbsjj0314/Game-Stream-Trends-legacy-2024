@@ -11,19 +11,22 @@ from common.utils.logging_utils import setup_minio_logging
 logger = logging.getLogger(__name__)
 DATA_TYPE = "top_categories"
 
+
 def create_headers():
     return {
         "Client-ID": TWC_CLIENT_ID,
         "Authorization": f"Bearer {TWC_ACCESS_TOKEN}",
     }
 
+
 def save_data_to_minio(data, page_num):
-    date_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    hour_str = datetime.now(timezone.utc).strftime('%H')
-    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d_%H-%M-%S')
+    date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    hour_str = datetime.now(timezone.utc).strftime("%H")
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
     file_name = f"data/raw/twitch/{DATA_TYPE}/{date_str}/{hour_str}/fetch_{DATA_TYPE}_{page_num}_{timestamp}.json"
     upload_to_minio(data, file_name)
     logger.info(f"Top categories data for page {page_num} uploaded to MinIO with key: {file_name}")
+
 
 def fetch_streams(base_url, headers, params, max_pages=2):
     streams = []
@@ -37,14 +40,14 @@ def fetch_streams(base_url, headers, params, max_pages=2):
             logger.info(f"Received successful response: {response.status_code}")
             data = response.json()
 
-            streams.extend(data.get('data', []))
+            streams.extend(data.get("data", []))
             pages_fetched += 1
 
             save_data_to_minio(data, pages_fetched)
 
-            if 'pagination' in data and 'cursor' in data['pagination']:
-                next_cursor = data['pagination']['cursor']
-                params['after'] = next_cursor
+            if "pagination" in data and "cursor" in data["pagination"]:
+                next_cursor = data["pagination"]["cursor"]
+                params["after"] = next_cursor
                 logger.info(f"Next cursor: {next_cursor}")
             else:
                 logger.info("No more pages to fetch.")
@@ -54,6 +57,7 @@ def fetch_streams(base_url, headers, params, max_pages=2):
             break
 
     return streams
+
 
 def main():
     setup_minio_logging(
@@ -69,6 +73,7 @@ def main():
 
     streams_data = fetch_streams(base_url, headers, params, max_pages=2)
     logger.info(f"Fetched {len(streams_data)} streams in total.")
+
 
 if __name__ == "__main__":
     main()

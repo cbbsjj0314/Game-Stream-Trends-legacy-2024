@@ -12,6 +12,7 @@ from common.utils.logging_utils import setup_minio_logging
 logger = logging.getLogger(__name__)
 DATA_TYPE = "details"
 
+
 def fetch_app_details(appid):
     url = f"https://store.steampowered.com/api/appdetails?appids={appid}"
     try:
@@ -45,7 +46,7 @@ def main():
     )
 
     try:
-        appids = download_from_minio('data/raw/steam/app-list/appids.json')
+        appids = download_from_minio("data/raw/steam/app-list/appids.json")
         if not appids:
             logger.error("No appids available to fetch details.")
             return
@@ -53,9 +54,11 @@ def main():
         combined_details = collect_all_details(appids)
 
         if combined_details:
-            date_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-            timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d_%H-%M-%S')
-            filename = f'data/raw/steam/{DATA_TYPE}/{date_str}/combined_{DATA_TYPE}_{timestamp}.json'
+            date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+            filename = (
+                f"data/raw/steam/{DATA_TYPE}/{date_str}/combined_{DATA_TYPE}_{timestamp}.json"
+            )
             upload_to_minio(combined_details, filename)
             logger.info("Combined details data uploaded successfully.")
         else:

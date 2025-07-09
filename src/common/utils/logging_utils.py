@@ -21,7 +21,7 @@ class MinIOLogHandler(logging.Handler):
         super().__init__()
         self.bucket_name = bucket_name
         self.data_type = data_type
-        self.date_str = date_str or datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        self.date_str = date_str or datetime.now(timezone.utc).strftime("%Y-%m-%d")
         self.buffer_size = buffer_size
         self.log_buffer = io.StringIO()
         self.buffer = []
@@ -52,13 +52,13 @@ class MinIOLogHandler(logging.Handler):
 
     def _upload_logs_to_minio(self):
         self.log_buffer.seek(0)
-        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d_%H-%M-%S')
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
         minio_key = f"logs/{self.data_type}/{self.date_str}/fetch_{self.data_type}_{timestamp}.log"
 
         self.minio_client.put_object(
             Bucket=self.bucket_name,
             Key=minio_key,
-            Body=self.log_buffer.getvalue().encode('utf-8'),
+            Body=self.log_buffer.getvalue().encode("utf-8"),
         )
         logging.info(f"Logs uploaded to MinIO at {minio_key}")
 
@@ -79,7 +79,9 @@ class JsonLogFormatter(logging.Formatter):
         return json.dumps(log_record)
 
 
-def setup_minio_logging(bucket_name, data_type, buffer_size=1000, log_level=logging.INFO, json_format=False):
+def setup_minio_logging(
+    bucket_name, data_type, buffer_size=1000, log_level=logging.INFO, json_format=False
+):
     """
     전역 로거에 MinIOLogHandler를 추가하는 편의 함수
 
@@ -93,7 +95,7 @@ def setup_minio_logging(bucket_name, data_type, buffer_size=1000, log_level=logg
     if json_format:
         formatter = JsonLogFormatter()
     else:
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     log_handler.setFormatter(formatter)
 
     logger = logging.getLogger()

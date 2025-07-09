@@ -12,6 +12,7 @@ from common.utils.logging_utils import setup_minio_logging
 logger = logging.getLogger(__name__)
 DATA_TYPE = "news"
 
+
 async def fetch_app_news_async(session, appid):
     url = f"https://api.steampowered.com/ISteamNews/GetNewsForApp/v2?appid={appid}"
     try:
@@ -24,11 +25,13 @@ async def fetch_app_news_async(session, appid):
         logger.exception(f"Failed to fetch news for appid {appid}")
         return appid, None
 
+
 async def fetch_all_news(appids):
     async with aiohttp.ClientSession() as session:
         tasks = [fetch_app_news_async(session, appid) for appid in appids]
         results = await asyncio.gather(*tasks)
         return {appid: data for appid, data in results if data}
+
 
 def main():
     setup_minio_logging(
@@ -39,7 +42,7 @@ def main():
     )
 
     try:
-        appids = download_from_minio('data/raw/steam/app-list/appids.json')
+        appids = download_from_minio("data/raw/steam/app-list/appids.json")
         if not appids:
             logger.error("No appids available to fetch news.")
             return
@@ -47,15 +50,18 @@ def main():
         combined_news = asyncio.run(fetch_all_news(appids))
 
         if combined_news:
-            date_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-            timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d_%H-%M-%S')
-            filename = f'data/raw/steam/{DATA_TYPE}/{date_str}/combined_{DATA_TYPE}_{timestamp}.json'
+            date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+            filename = (
+                f"data/raw/steam/{DATA_TYPE}/{date_str}/combined_{DATA_TYPE}_{timestamp}.json"
+            )
             upload_to_minio(combined_news, filename)
             logger.info("Combined news data uploaded successfully.")
         else:
             logger.error("No news data collected to upload.")
     except Exception:
         logger.exception("An error occurred in main()")
+
 
 if __name__ == "__main__":
     main()

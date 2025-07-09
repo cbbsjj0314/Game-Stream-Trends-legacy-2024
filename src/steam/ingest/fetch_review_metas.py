@@ -12,6 +12,7 @@ from common.utils.logging_utils import setup_minio_logging
 logger = logging.getLogger(__name__)
 DATA_TYPE = "review_metas"
 
+
 async def fetch_app_review_metas_async(session, appid):
     url = (
         f"https://store.steampowered.com/appreviews/{appid}"
@@ -28,11 +29,13 @@ async def fetch_app_review_metas_async(session, appid):
         logger.exception(f"Failed to fetch review metas for appid {appid}")
         return appid, None
 
+
 async def fetch_all_review_metas(appids):
     async with aiohttp.ClientSession() as session:
         tasks = [fetch_app_review_metas_async(session, appid) for appid in appids]
         results = await asyncio.gather(*tasks)
         return {appid: data for appid, data in results if data}
+
 
 def main():
     setup_minio_logging(
@@ -43,7 +46,7 @@ def main():
     )
 
     try:
-        appids = download_from_minio('data/raw/steam/app-list/appids.json')
+        appids = download_from_minio("data/raw/steam/app-list/appids.json")
         if not appids:
             logger.error("No appids available to fetch review metas.")
             return
@@ -51,15 +54,18 @@ def main():
         combined_review_metas = asyncio.run(fetch_all_review_metas(appids))
 
         if combined_review_metas:
-            date_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-            timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d_%H-%M-%S')
-            filename = f'data/raw/steam/{DATA_TYPE}/{date_str}/combined_{DATA_TYPE}_{timestamp}.json'
+            date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+            filename = (
+                f"data/raw/steam/{DATA_TYPE}/{date_str}/combined_{DATA_TYPE}_{timestamp}.json"
+            )
             upload_to_minio(combined_review_metas, filename)
             logger.info("Combined review metas data uploaded successfully.")
         else:
             logger.error("No review metas data collected to upload.")
     except Exception:
         logger.exception("An error occurred in main()")
+
 
 if __name__ == "__main__":
     main()
