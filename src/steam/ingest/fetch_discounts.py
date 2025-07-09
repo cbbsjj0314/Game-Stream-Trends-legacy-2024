@@ -6,18 +6,18 @@
 
 import logging
 import requests
-
 from datetime import datetime, timezone
-from steam.ingest.steam_fetch_config import Config
 
+from common.config import Config
+from common.utils.minio_utils import download_from_minio, upload_to_minio
+from common.utils.logging_utils import setup_minio_logging
+
+logger = logging.getLogger(__name__)
 DATA_TYPE = "discounts"
-Config.setup_minio_logging(bucket_name=Config.MINIO_BUCKET_NAME, data_type=DATA_TYPE)
-
 
 def chunk_list(lst, chunk_size):
     for i in range(0, len(lst), chunk_size):
         yield lst[i : i + chunk_size]
-
 
 def get_discount_data(appids_chunk):
     appids_str = ",".join(map(str, appids_chunk))
@@ -26,16 +26,22 @@ def get_discount_data(appids_chunk):
         response = requests.get(url)
         response.raise_for_status()
         return response.json()
-    except Exception as e:
-        logging.error(f"Failed to fetch discount data for appids chunk: {e}")
+    except Exception:
+        logger.exception("Failed to fetch discount data for appids chunk")
         return None
 
-
 def main():
+    setup_minio_logging(
+        bucket_name=Config.MINIO_BUCKET_NAME,
+        data_type=DATA_TYPE,
+        buffer_size=100,
+        json_format=True,
+    )
+
     try:
-        appids = Config.download_from_minio('data/raw/steam/app-list/appids.json')
+        appids = download_from_minio('data/raw/steam/app-list/appids.json')
         if not appids:
-            logging.error("No appids available to fetch discounts.")
+            logger.error("No appids available to fetch discounts.")
             return
 
         chunked_appids = list(chunk_list(appids, 1000))
@@ -47,15 +53,12 @@ def main():
                 date_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
                 timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d_%H-%M-%S')
                 chunk_key = f'data/raw/steam/{DATA_TYPE}/{date_str}/combined_{DATA_TYPE}_{idx}_{timestamp}.json'
-                Config.upload_to_minio(combined_discounts, chunk_key)
-                logging.info(
-                    f"Discount data for chunk {idx} uploaded to MinIO: {chunk_key}"
-                )
+                upload_to_minio(combined_discounts, chunk_key)
+                logger.info(f"Discount data for chunk {idx} uploaded to MinIO: {chunk_key}")
             else:
-                logging.error(f"Failed to fetch or upload data for chunk {idx}.")
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
-
+                logger.error(f"Failed to fetch or upload data for chunk {idx}.")
+    except Exception:
+        logger.exception("An error occurred in main()")
 
 if __name__ == "__main__":
     main()

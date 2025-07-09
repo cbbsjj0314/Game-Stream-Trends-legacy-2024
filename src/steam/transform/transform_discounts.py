@@ -2,40 +2,24 @@
 
 import dask.dataframe as dd
 import pandas as pd
-import boto3
 import logging
 import json
 import re
 from datetime import datetime, timedelta, timezone
 from botocore.exceptions import ClientError
-from airflow.models import Variable
+
+from common.config import Config
+from common.utils.minio_utils import get_minio_client
+from common.utils.logging_utils import setup_minio_logging
 
 CATEGORY = "discounts"
 
 BASE_INPUT_PATH = "data/raw/steam"
 BASE_OUTPUT_PATH = "data/processed/silver/steam"
 
-MINIO_ENDPOINT = Variable.get("MINIO_ENDPOINT")
-MINIO_ACCESS_KEY = Variable.get("MINIO_ACCESS_KEY")
-MINIO_SECRET_KEY = Variable.get("MINIO_SECRET_KEY")
-MINIO_BUCKET_NAME = Variable.get("MINIO_BUCKET_NAME")
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
-)
 logger = logging.getLogger("silver-layer-dask-job")
 
-minio_client = boto3.client(
-    "s3",
-    endpoint_url=MINIO_ENDPOINT,
-    aws_access_key_id=MINIO_ACCESS_KEY,
-    aws_secret_access_key=MINIO_SECRET_KEY,
-    region_name="ap-northeast-2",
-    use_ssl=False,
-)
-
-
-def minio_path_exists(bucket, prefix):
+def minio_path_exists(minio_client, bucket, prefix):
     try:
         response = minio_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
         exists = "Contents" in response
@@ -45,14 +29,21 @@ def minio_path_exists(bucket, prefix):
         logger.error(f"Error checking MinIO path: {str(e)}")
         return False
 
-
 def extract_timestamp_from_filename(filename):
     TIMESTAMP_PATTERN = r".*_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\.json"
     match = re.search(TIMESTAMP_PATTERN, filename)
     return match.group(1) if match else None
 
-
 def process_data():
+    setup_minio_logging(
+        bucket_name=Config.MINIO_BUCKET_NAME,
+        data_type=CATEGORY,
+        buffer_size=100,
+        json_format=True,
+    )
+
+    minio_client = get_minio_client()
+
     now = datetime.now(timezone.utc)
     start_time = now - timedelta(days=1)
     end_time = now
@@ -64,13 +55,13 @@ def process_data():
         processed_path = f"{BASE_OUTPUT_PATH}/{CATEGORY}/{formatted_date}/"
 
         logger.info(f"Checking raw data path: {raw_data_path}")
-        if not minio_path_exists(MINIO_BUCKET_NAME, raw_data_path):
+        if not minio_path_exists(minio_client, Config.MINIO_BUCKET_NAME, raw_data_path):
             logger.info(f"Raw data path does not exist, skipping: {raw_data_path}")
             start_time += timedelta(days=1)
             continue
 
         logger.info(f"Checking if processed data already exists: {processed_path}")
-        if minio_path_exists(MINIO_BUCKET_NAME, processed_path):
+        if minio_path_exists(minio_client, Config.MINIO_BUCKET_NAME, processed_path):
             logger.info(f"Skipping already processed path: {processed_path}")
             start_time += timedelta(days=1)
             continue
@@ -78,7 +69,7 @@ def process_data():
         logger.info(f"Processing data from: {raw_data_path}")
         try:
             objects = minio_client.list_objects_v2(
-                Bucket=MINIO_BUCKET_NAME, Prefix=raw_data_path
+                Bucket=Config.MINIO_BUCKET_NAME, Prefix=raw_data_path
             )
             all_files = [obj["Key"] for obj in objects.get("Contents", [])]
             logger.info(f"Found {len(all_files)} files to process.")
@@ -88,7 +79,7 @@ def process_data():
             for file_key in all_files:
                 logger.info(f"Downloading file: {file_key}")
                 response = minio_client.get_object(
-                    Bucket=MINIO_BUCKET_NAME, Key=file_key
+                    Bucket=Config.MINIO_BUCKET_NAME, Key=file_key
                 )
                 content = response["Body"].read().decode("utf-8")
                 json_data = json.loads(content)
@@ -124,9 +115,7 @@ def process_data():
                             "final_price": pd.NA
                             if price_data.get("final") in [None, ""]
                             else int(price_data["final"]),
-                            "discount_percent": int(
-                                price_data.get("discount_percent", 0)
-                            ),
+                            "discount_percent": int(price_data.get("discount_percent", 0)),
                         }
                     )
 
@@ -150,15 +139,15 @@ def process_data():
             transformed_df = dd.from_pandas(df, npartitions=1)
 
             logger.info("Saving transformed data as Parquet to MinIO...")
-            minio_parquet_path = f"s3://{MINIO_BUCKET_NAME}/{processed_path}"
+            minio_parquet_path = f"s3://{Config.MINIO_BUCKET_NAME}/{processed_path}"
 
             transformed_df.to_parquet(
                 minio_parquet_path,
                 engine="pyarrow",
                 storage_options={
-                    "key": MINIO_ACCESS_KEY,
-                    "secret": MINIO_SECRET_KEY,
-                    "endpoint_url": MINIO_ENDPOINT,
+                    "key": Config.MINIO_ACCESS_KEY,
+                    "secret": Config.MINIO_SECRET_KEY,
+                    "endpoint_url": Config.MINIO_ENDPOINT,
                 },
                 write_index=False,
             )
