@@ -31,7 +31,7 @@ def fetch_discounts(appids, chunk_size=1000):
             logger.exception(f"Failed to fetch discount data for chunk {idx}")
     return all_discounts
 
-if __name__ == "__main__":
+def main():
     run_ingest(
         fetch_func=fetch_discounts,
         data_type="discounts",
@@ -42,3 +42,6 @@ if __name__ == "__main__":
         appids_key="data/raw/steam/app-list/appids.json",
         is_async=False,
     )
+
+if __name__ == "__main__":
+    main()

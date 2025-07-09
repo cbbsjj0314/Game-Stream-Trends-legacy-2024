@@ -24,7 +24,7 @@ def fetch_details(appids, delay=3):
         time.sleep(delay)
     return details
 
-if __name__ == "__main__":
+def main():
     run_ingest(
         fetch_func=fetch_details,
         data_type="details",
@@ -35,3 +35,6 @@ if __name__ == "__main__":
         appids_key="data/raw/steam/app-list/appids.json",
         is_async=False,
     )
+
+if __name__ == "__main__":
+    main()

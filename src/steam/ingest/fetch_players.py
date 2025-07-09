@@ -33,7 +33,7 @@ def make_player_filename(data_type, date_str, timestamp):
     hour_str = timestamp[11:13]  # "YYYY-MM-DD_HH-MM-SS"에서 HH만 추출
     return f"data/raw/steam/{data_type}/{date_str}/{hour_str}/combined_{data_type}_{timestamp}.json"
 
-if __name__ == "__main__":
+def main():
     run_ingest(
         fetch_func=fetch_all_players,
         data_type="players",
@@ -45,3 +45,6 @@ if __name__ == "__main__":
         is_async=True,
         upload_filename_func=make_player_filename,
     )
+
+if __name__ == "__main__":
+    main()

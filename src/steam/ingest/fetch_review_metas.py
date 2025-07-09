@@ -31,7 +31,7 @@ async def fetch_all_review_metas(appids):
         results = await asyncio.gather(*tasks)
         return {appid: data for appid, data in results if data}
 
-if __name__ == "__main__":
+def main():
     run_ingest(
         fetch_func=fetch_all_review_metas,
         data_type="review_metas",
@@ -42,3 +42,6 @@ if __name__ == "__main__":
         appids_key="data/raw/steam/app-list/appids.json",
         is_async=True,
     )
+
+if __name__ == "__main__":
+    main()
