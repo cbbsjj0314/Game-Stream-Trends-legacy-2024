@@ -3,6 +3,7 @@
 import aiohttp
 import asyncio
 import logging
+from aiohttp.client_exceptions import ClientResponseError
 from common.ingest_runner import run_ingest
 from common.config import Config
 from common.utils.minio_utils import download_from_minio, upload_to_minio
@@ -10,18 +11,41 @@ from common.utils.logging_utils import setup_minio_logging
 
 async def fetch_app_players_async(session, appid):
     logger = logging.getLogger(__name__)
+    if isinstance(appid, dict):
+        appid_val = appid["appid"]
+        name = appid.get("name")
+    else:
+        appid_val = appid
+        name = None
+
     url = (
-        f"https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid={appid}"
+        f"https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid={appid_val}"
     )
     try:
         async with session.get(url) as response:
             response.raise_for_status()
             data = await response.json()
-            logger.info(f"Players for appid {appid} fetched successfully.")
-            return appid, data
-    except Exception:
-        logger.exception(f"Failed to fetch players for appid {appid}")
-        return appid, None
+            logger.info(f"Players for appid {appid_val} ({name}) fetched successfully.")
+            return appid_val, {"name": name, "players": data}
+    except ClientResponseError as e:
+        if e.status == 404:
+            logger.warning(
+                f"404 Not Found for appid {appid_val} ({name}) from url: {url} | Reason: {e}",
+                exc_info=False
+            )
+            return appid_val, {"name": name, "players": "unknown"}
+        else:
+            logger.error(
+                f"HTTP error for appid {appid_val} ({name}) from url: {url} | Reason: {e}",
+                exc_info=True
+            )
+            return appid_val, {"name": name, "players": "unknown"}
+    except Exception as e:
+        logger.error(
+            f"Failed to fetch players for appid {appid_val} ({name}) from url: {url} | Reason: {e}",
+            exc_info=True
+        )
+        return appid_val, {"name": name, "players": "unknown"}
 
 async def fetch_all_players(appids):
     async with aiohttp.ClientSession() as session:
