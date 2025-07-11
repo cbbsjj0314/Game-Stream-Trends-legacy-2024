@@ -11,7 +11,8 @@ def fetch_details(appids, delay=3):
     logger = logging.getLogger(__name__)
     import time
     details = {}
-    for appid in appids:
+    for item in appids:
+        appid = item["appid"] if isinstance(item, dict) else item
         url = f"https://store.steampowered.com/api/appdetails?appids={appid}"
         try:
             response = requests.get(url)

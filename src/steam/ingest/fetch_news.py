@@ -10,16 +10,28 @@ from common.utils.logging_utils import setup_minio_logging
 
 async def fetch_app_news_async(session, appid):
     logger = logging.getLogger(__name__)
-    url = f"https://api.steampowered.com/ISteamNews/GetNewsForApp/v2?appid={appid}"
+    if isinstance(appid, dict):
+        appid_val = appid.get("appid")
+        name = appid.get("name")
+    else:
+        appid_val = appid
+        name = None
+
+    url = f"https://api.steampowered.com/ISteamNews/GetNewsForApp/v2?appid={appid_val}"
     try:
         async with session.get(url) as response:
             response.raise_for_status()
             data = await response.json()
-            logger.info(f"News for appid {appid} fetched successfully.")
-            return appid, data
-    except Exception:
-        logger.exception(f"Failed to fetch news for appid {appid}")
-        return appid, None
+            logger.info(f"News for appid {appid_val} fetched successfully.")
+            return appid_val, data
+    except Exception as e:
+        error_msg = (
+            f"Failed to fetch news for appid {appid_val}"
+            + (f" ({name})" if name else "")
+            + f" from url: {url} | Reason: {str(e)}"
+        )
+        logger.warning(error_msg)
+        return appid_val, None
 
 async def fetch_all_news(appids):
     async with aiohttp.ClientSession() as session:

@@ -19,8 +19,11 @@ def fetch_discounts(appids, chunk_size=1000):
     logger = logging.getLogger(__name__)
     all_discounts = {}
     for idx, chunk in enumerate(chunk_list(appids, chunk_size), start=1):
-        appids_str = ",".join(map(str, chunk))
+        appids_str = ",".join(
+            str(item["appid"]) if isinstance(item, dict) else str(item) for item in chunk
+        )
         url = f"https://store.steampowered.com/api/appdetails?appids={appids_str}&filters=price_overview"
+        logger.info(f"Requesting URL: {url}")
         try:
             response = requests.get(url)
             response.raise_for_status()
@@ -28,7 +31,8 @@ def fetch_discounts(appids, chunk_size=1000):
             logger.info(f"Discount data for chunk {idx} fetched successfully.")
             all_discounts.update(data)
         except Exception:
-            logger.exception(f"Failed to fetch discount data for chunk {idx}")
+            logger.exception(f"Failed to fetch discount data for chunk {idx} from url: {url}")
+
     return all_discounts
 
 def main():

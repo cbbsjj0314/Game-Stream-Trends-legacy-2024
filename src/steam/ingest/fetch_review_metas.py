@@ -10,8 +10,15 @@ from common.utils.logging_utils import setup_minio_logging
 
 async def fetch_app_review_metas_async(session, appid):
     logger = logging.getLogger(__name__)
+    if isinstance(appid, dict):
+        appid_val = appid.get("appid")
+        name = appid.get("name")
+    else:
+        appid_val = appid
+        name = None
+
     url = (
-        f"https://store.steampowered.com/appreviews/{appid}"
+        f"https://store.steampowered.com/appreviews/{appid_val}"
         "?json=1&language=all&review_type=all&purchase_type=all&"
         "playtime_filter_min=0&playtime_filter_max=0&playtime_type=all&filter_offtopic_activity=1"
     )
@@ -19,11 +26,16 @@ async def fetch_app_review_metas_async(session, appid):
         async with session.get(url) as response:
             response.raise_for_status()
             data = await response.json()
-            logger.info(f"Review metas for appid {appid} fetched successfully.")
-            return appid, data
-    except Exception:
-        logger.exception(f"Failed to fetch review metas for appid {appid}")
-        return appid, None
+            logger.info(f"Review metas for appid {appid_val} fetched successfully.")
+            return appid_val, data
+    except Exception as e:
+        error_msg = (
+            f"Failed to fetch review metas for appid {appid_val}"
+            + (f" ({name})" if name else "")
+            + f" from url: {url} | Reason: {str(e)}"
+        )
+        logger.warning(error_msg)
+        return appid_val, None
 
 async def fetch_all_review_metas(appids):
     async with aiohttp.ClientSession() as session:
