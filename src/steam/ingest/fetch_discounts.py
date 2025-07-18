@@ -1,27 +1,18 @@
-# src/steam/ingest/fetch_discounts.py
-
-# 할인 정보를 가져오는데 통화 기준은 한국임
-# cc 매개변수를 추가하여 다른 나라 통화로도 수정 가능
-# 예: cc=en, tw, ...
+# [PATH] src/steam/ingest/fetch_discounts.py
 
 import requests
 import logging
-from common.ingest_runner import run_ingest
+from common.ingest.runner import IngestJobConfig, run_ingest
 from common.config import Config
-from common.utils.minio_utils import download_from_minio, upload_to_minio
-from common.utils.logging_utils import setup_minio_logging
-
-def chunk_list(lst, chunk_size):
-    for i in range(0, len(lst), chunk_size):
-        yield lst[i:i+chunk_size]
+from common.minio.client import MinioClientWrapper
+from common.logging.minio_handler import setup_minio_logging
+from steam.utils import chunk_list, standardize_appid_entry
 
 def fetch_discounts(appids, chunk_size=1000):
     logger = logging.getLogger(__name__)
     all_discounts = {}
     for idx, chunk in enumerate(chunk_list(appids, chunk_size), start=1):
-        appids_str = ",".join(
-            str(item["appid"]) if isinstance(item, dict) else str(item) for item in chunk
-        )
+        appids_str = ",".join(str(standardize_appid_entry(item)[0]) for item in chunk)
         url = f"https://store.steampowered.com/api/appdetails?appids={appids_str}&filters=price_overview"
         logger.info(f"Requesting URL: {url}")
         try:
@@ -32,20 +23,21 @@ def fetch_discounts(appids, chunk_size=1000):
             all_discounts.update(data)
         except Exception:
             logger.exception(f"Failed to fetch discount data for chunk {idx} from url: {url}")
-
     return all_discounts
 
 def main():
-    run_ingest(
+    minio = MinioClientWrapper()
+    job_cfg = IngestJobConfig(
         fetch_func=fetch_discounts,
         data_type="discounts",
         minio_bucket=Config.MINIO_BUCKET_NAME,
         setup_logging_func=setup_minio_logging,
-        download_func=download_from_minio,
-        upload_func=upload_to_minio,
+        download_func=minio.download_json,
+        upload_func=minio.upload_json,
         appids_key="data/raw/steam/app-list/appids.json",
         is_async=False,
     )
+    run_ingest(job_cfg)
 
 if __name__ == "__main__":
     main()

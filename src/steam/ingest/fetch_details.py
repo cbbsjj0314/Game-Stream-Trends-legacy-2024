@@ -1,18 +1,19 @@
-# src/steam/ingest/fetch_details.py
+# [PATH] src/steam/ingest/fetch_details.py
 
 import requests
 import logging
-from common.ingest_runner import run_ingest
+from common.ingest.runner import IngestJobConfig, run_ingest
 from common.config import Config
-from common.utils.minio_utils import download_from_minio, upload_to_minio
-from common.utils.logging_utils import setup_minio_logging
+from common.minio.client import MinioClientWrapper
+from common.logging.minio_handler import setup_minio_logging
+from steam.utils import standardize_appid_entry
+import time
 
 def fetch_details(appids, delay=3):
     logger = logging.getLogger(__name__)
-    import time
     details = {}
     for item in appids:
-        appid = item["appid"] if isinstance(item, dict) else item
+        appid, _ = standardize_appid_entry(item)
         url = f"https://store.steampowered.com/api/appdetails?appids={appid}"
         try:
             response = requests.get(url)
@@ -26,16 +27,18 @@ def fetch_details(appids, delay=3):
     return details
 
 def main():
-    run_ingest(
+    minio = MinioClientWrapper()
+    job_cfg = IngestJobConfig(
         fetch_func=fetch_details,
         data_type="details",
         minio_bucket=Config.MINIO_BUCKET_NAME,
         setup_logging_func=setup_minio_logging,
-        download_func=download_from_minio,
-        upload_func=upload_to_minio,
+        download_func=minio.download_json,
+        upload_func=minio.upload_json,
         appids_key="data/raw/steam/app-list/appids.json",
         is_async=False,
     )
+    run_ingest(job_cfg)
 
 if __name__ == "__main__":
     main()
