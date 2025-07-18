@@ -2,7 +2,6 @@
 
 from airflow.models import Variable
 
-
 class Config:
     MINIO_ENDPOINT = Variable.get("MINIO_ENDPOINT")
     MINIO_ACCESS_KEY = Variable.get("MINIO_ACCESS_KEY")
